@@ -23,7 +23,7 @@ class Explosion(pygame.sprite.Sprite):
 		self.rect.center = [x, y]
 		self.counter = 0
 	
-	def update(self, screen=None):
+	def update(self, screen = None):
 		explosion_speed = 4
 		#update explosion animation
 		self.counter += 1

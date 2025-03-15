@@ -3,12 +3,12 @@ import random
 
 from constants import *
 from pygame.locals import *
-
 from spaceship import Spaceship
 from bullets import Bullets
 from aliens import Aliens
 from alien_bullets import AlienBullets
 from explosions import Explosion
+from timer import RepeatedTimer
 
 def main():
 
@@ -16,6 +16,7 @@ def main():
     pygame.init()
     pygame.font.init()
     font = pygame.font.Font(None, 36)
+    
 
     #Add sound
     pygame.mixer.pre_init(44100, -16, 2, 512)
@@ -69,7 +70,16 @@ def main():
                 alien = Aliens(200 + item * 100, 100 + row * 80)
                 #add to groups
                 alien_group.add(alien), drawables.add(alien), updatables.add(alien)
-    create_aliens()
+
+    def random_aliens():
+        #generate aliens
+        x = random.randint(250, int(SCREEN_WIDTH - 250))
+        y = random.randint(200, int(SCREEN_HEIGHT/2))
+        alien = Aliens(x, y)
+        alien_group.add(alien), drawables.add(alien), updatables.add(alien)
+  
+    create_aliens() #create initial aliens
+    timer = RepeatedTimer(ENEMY_SPAWN_TIME, random_aliens) #spawn random aliens every 5 secs
     
     last_alien_shot = pygame.time.get_ticks()
 
@@ -77,7 +87,7 @@ def main():
     while True:
         clock.tick(fps)
 
-        #add background
+        #add background                          
         screen.blit(background, (0, 0)) 
 
         #create random alien bullets
@@ -94,6 +104,7 @@ def main():
         for bullet in bullet_group:
             if pygame.sprite.spritecollide(bullet, alien_group, True):
                 bullet.kill() 
+                spaceship.update_score()
                 explosion = Explosion(bullet.rect.x, bullet.rect.y, 2)
                 explosion_group.add(explosion),drawables.add(explosion), updatables.add(explosion) 
                 explosion_fx.play()  
@@ -113,14 +124,24 @@ def main():
                     explosion_fx.play()
                     spaceship.kill()
 
+        if len(alien_group) < 10:
+            timer.stop()
+        
+        if len(alien_group) == 0:
+            score_text = font.render(f'YOU WIN: Score: {spaceship.score}', True, (255, 255, 255))
+            screen.blit(score_text, (int(SCREEN_WIDTH/2), int(SCREEN_HEIGHT/2)))
+
         for event in pygame.event.get():
             if event.type == QUIT:
+                timer.stop()
                 return
 
         #update sprite groups
         updatables.update(screen)
         drawables.draw(screen)
         
+        score_text = font.render(f'Score: {spaceship.score}', True, (255, 255, 255))
+        screen.blit(score_text, (10, 10))
         #update sprite groups   
         pygame.display.flip()
 

@@ -1,7 +1,9 @@
 import pygame
 import random
+import time
 from pygame.locals import *
 from constants import *
+from timer import RepeatedTimer
 
 
 class Aliens(pygame.sprite.Sprite):
@@ -17,7 +19,7 @@ class Aliens(pygame.sprite.Sprite):
         self.move_counter = 0
 
         self.last_alien_shot = pygame.time.get_ticks()
-
+        
     def update(self, screen = None):
         self.rect.x += self.move_direction
         self.move_counter += 1
@@ -26,7 +28,12 @@ class Aliens(pygame.sprite.Sprite):
             self.move_direction *= -1
             self.move_counter *= self.move_direction
 
-  
+
+
+
+    
+
+       
  
 
 
