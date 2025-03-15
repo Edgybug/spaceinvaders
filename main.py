@@ -2,19 +2,32 @@ import pygame
 import random
 
 from constants import *
-
 from pygame.locals import *
 
 from spaceship import Spaceship
 from bullets import Bullets
 from aliens import Aliens
 from alien_bullets import AlienBullets
+from explosions import Explosion
 
 def main():
+
+
     pygame.init()
     pygame.font.init()
     font = pygame.font.Font(None, 36)
 
+    #Add sound
+    pygame.mixer.pre_init(44100, -16, 2, 512)
+    pygame.mixer.init()
+
+    explosion_fx = pygame.mixer.Sound("img/explosion.wav")
+    explosion_fx.set_volume(0.2)
+
+    explosion2_fx = pygame.mixer.Sound("img/explosion2.wav")
+    explosion2_fx.set_volume(0.2)
+
+    
     #Set up the clock and fps for the game
     clock = pygame.time.Clock()
     fps = 60
@@ -32,6 +45,7 @@ def main():
     bullet_group = pygame.sprite.Group()
     alien_group = pygame.sprite.Group()
     alien_bullet_group = pygame.sprite.Group()
+    explosion_group = pygame.sprite.Group()
 
     #PLAYER
     Spaceship.containers = (spaceship_group, drawables, updatables)
@@ -45,6 +59,7 @@ def main():
     #ALIENS 
     Aliens.containers = (alien_group, drawables, updatables)
     AlienBullets.containers = (alien_bullet_group, drawables, updatables)
+    Explosion.containers = (explosion_group, drawables, updatables)
 
     #CREATE ALIENS
     def create_aliens():
@@ -75,17 +90,27 @@ def main():
             alien_bullet_group.add(alien_bullet), drawables.add(alien_bullet), updatables.add(alien_bullet)
             last_alien_shot = time_now
 
-        #COLLISION
+        #COLLISION PLAYER -> ALIEN
         for bullet in bullet_group:
             if pygame.sprite.spritecollide(bullet, alien_group, True):
-                bullet.kill()
-        
+                bullet.kill() 
+                explosion = Explosion(bullet.rect.x, bullet.rect.y, 2)
+                explosion_group.add(explosion),drawables.add(explosion), updatables.add(explosion) 
+                explosion_fx.play()  
+
+        #COLLISION ALIEN -> PLAYER
         for bullet in alien_bullet_group:
             if pygame.sprite.spritecollide(bullet, spaceship_group, False, pygame.sprite.collide_mask):
                 #reduce spaceship health
+                explosion = Explosion(spaceship.rect.x, spaceship.rect.y, 2)
+                explosion_group.add(explosion),drawables.add(explosion), updatables.add(explosion)
+                explosion2_fx.play()
                 spaceship.health_remaining -= 1
                 bullet.kill()
                 if spaceship.health_remaining == 0:
+                    explosion = Explosion(spaceship.rect.x, spaceship.rect.y, 3)
+                    explosion_group.add(explosion),drawables.add(explosion), updatables.add(explosion)
+                    explosion_fx.play()
                     spaceship.kill()
 
         for event in pygame.event.get():

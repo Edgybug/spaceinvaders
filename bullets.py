@@ -1,6 +1,7 @@
 import pygame
 from pygame.locals import *
 from constants import *
+from explosions import Explosion
 
 class Bullets(pygame.sprite.Sprite):
     def __init__(self, x, y):
@@ -15,4 +16,5 @@ class Bullets(pygame.sprite.Sprite):
         self.rect.y -= 5
         if self.rect.bottom < 0:
            self.kill()
+           
         

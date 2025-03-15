@@ -3,6 +3,11 @@ from pygame.locals import *
 from constants import *
 from bullets import Bullets
 
+pygame.mixer.pre_init(44100, -16, 2, 512)
+pygame.mixer.init()
+laser_fx = pygame.mixer.Sound("img/laser.wav")
+laser_fx.set_volume(0.2)
+
 class Spaceship(pygame.sprite.Sprite):
     def __init__(self, x, y, health = 3):
         pygame.sprite.Sprite.__init__(self)
@@ -13,6 +18,7 @@ class Spaceship(pygame.sprite.Sprite):
         self.health_start = health
         self.health_remaining = health 
         self.last_shot = pygame.time.get_ticks()
+        
 
     def draw(self, screen):
         screen.blit(self.image, self.rect)
@@ -42,12 +48,13 @@ class Spaceship(pygame.sprite.Sprite):
          
         #shoot bullets
         if key[pygame.K_SPACE] and time_now - self.last_shot > SHOOT_COOLDOWN:
+            laser_fx.play()
             self.shoot()
             self.last_shot = time_now
         
         #update mask
         self.mask = pygame.mask.from_surface(self.image)
-        
+
         if screen:
             self.healthbar(screen)
 
