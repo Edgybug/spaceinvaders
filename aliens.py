@@ -9,7 +9,7 @@ from timer import RepeatedTimer
 class Aliens(pygame.sprite.Sprite):
     def __init__(self, x, y):
         pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.image.load("img/alien" + str(random.randint(1,5)) + ".png")
+        self.image = pygame.image.load("img/alien" + str(random.randint(1,9)) + ".png")
         self.image = pygame.transform.scale(self.image, (35, 35))
 
         self.rect = self.image.get_rect()
