@@ -5,10 +5,9 @@ from pygame.locals import *
 from constants import *
 from timer import RepeatedTimer
 
-
 class Aliens(pygame.sprite.Sprite):
-    def __init__(self, x, y):
-        pygame.sprite.Sprite.__init__(self)
+    def __init__(self, x, y, *groups):
+        super().__init__(*groups)
         self.image = pygame.image.load("img/alien" + str(random.randint(1,9)) + ".png")
         self.image = pygame.transform.scale(self.image, (35, 35))
 

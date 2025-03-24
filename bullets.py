@@ -4,8 +4,8 @@ from constants import *
 from explosions import Explosion
 
 class Bullets(pygame.sprite.Sprite):
-    def __init__(self, x, y):
-        pygame.sprite.Sprite.__init__(self)
+    def __init__(self, x, y,*groups):
+        super().__init__(*groups)
         self.image = pygame.image.load('img/bullet.png')
         self.image = pygame.transform.scale(self.image, (15, 15))
 

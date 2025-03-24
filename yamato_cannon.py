@@ -5,8 +5,8 @@ from explosions import Explosion
 from timer import RepeatedTimer
 
 class Yamato_Cannon(pygame.sprite.Sprite):
-    def __init__(self, x, y):
-        pygame.sprite.Sprite.__init__(self)
+    def __init__(self, x, y, *groups):
+        super().__init__(*groups)
         self.image = pygame.image.load('img/yamato.png')
         self.image = pygame.transform.scale(self.image, (150, 150))
 

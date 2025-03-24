@@ -3,9 +3,8 @@ from pygame.locals import *
 
 #create Explosion class
 class Explosion(pygame.sprite.Sprite):
-	def __init__(self, x, y, size):
-		pygame.sprite.Sprite.__init__(self)
-		self.add(Explosion.containers) 
+	def __init__(self, x, y, size, *groups):
+		super().__init__(*groups) 
 		self.images = []
 		for num in range(1, 6):
 			img = pygame.image.load(f"img/exp{num}.png")
