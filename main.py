@@ -2,12 +2,8 @@ import pygame
 import random
 
 from constants import *
-from pygame.locals import *
+from sprites import *
 from spaceship import Spaceship
-from bullets import Bullets
-from yamato_cannon import Yamato_Cannon
-from aliens import Aliens
-from alien_bullets import AlienBullets
 from explosions import Explosion
 
 class Game(pygame.sprite.Sprite):
@@ -32,6 +28,7 @@ class Game(pygame.sprite.Sprite):
         self.bullet_group = pygame.sprite.Group()
         self.yamato_group = pygame.sprite.Group()
         self.alien_sprites = pygame.sprite.Group()
+        self.random_aliens = pygame.sprite.Group()
         self.alien_bullet_group = pygame.sprite.Group()
         self.explosion_group = pygame.sprite.Group()
         
@@ -60,12 +57,13 @@ class Game(pygame.sprite.Sprite):
         #player shooting timer
         self.last_shot = pygame.time.get_ticks()
         self.last_yamato_shot = pygame.time.get_ticks()
+
         #alien shooting timer
         self.last_alien_shot = pygame.time.get_ticks()
 
         #random alien timer
-        self.enemy_event = pygame.event.custom_type()
-        pygame.time.set_timer(self.enemy_event, 1000)
+        self.spawn_random_alien = pygame.event.custom_type()
+        pygame.time.set_timer(self.spawn_random_alien, 5000)
     
     #ADDING TEXT
     def draw_text(self, text, font, text_col,x,y):
@@ -96,6 +94,11 @@ class Game(pygame.sprite.Sprite):
                 self.player.yamato_charges -= 1
                 self.last_yamato_shot = time_now
 
+    def healthbar(self):
+        #draw health bar
+        pygame.draw.rect(self.screen, RED, (self.player.rect.x, self.player.rect.bottom + 10, self.player.rect.width, 15))
+        if self.player.health_remaining:
+            pygame.draw.rect(self.screen, GREEN, (self.player.rect.x, (self.player.rect.bottom + 10), int(self.player.rect.width *(self.player.health_remaining / self.player.health_start)), 15))
     #GENERATE ALIENS
     def create_alien_grid(self):
         for row in range(ENEMY_ROWS):
@@ -107,8 +110,9 @@ class Game(pygame.sprite.Sprite):
         #generate aliens
         x = random.randint(300, 900)
         y = random.randint(100, 450)    
-        Aliens(x, y,(self.all_sprites, self.alien_sprites))
+        Aliens(x, y,(self.all_sprites, self.random_aliens))
     
+    #HANDLE COLLISIONS
     def collisions(self):
         time_now = pygame.time.get_ticks() #record_current_time 
 
@@ -121,8 +125,7 @@ class Game(pygame.sprite.Sprite):
                     
                     #if time_now - last_random_alien_atack > ALIEN_ATTACK_COOLDOWN:
                         #random_attack()
-                        #reverse_attack()
-                    
+                        #reverse_attack() 
             #COLLISION PLAYER BULLET -> ALIEN
             for bullet in self.bullet_group:
                     if pygame.sprite.spritecollide(bullet, self.alien_sprites, True, pygame.sprite.collide_mask):
@@ -165,18 +168,19 @@ class Game(pygame.sprite.Sprite):
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     self.running = False
-                if event.type == self.enemy_event and len(self.alien_sprites) > 10:
+                if event.type == self.spawn_random_alien and len(self.alien_sprites) > 15 and len(self.random_aliens) < 10:
                     self.generate_random_aliens()               
 
             self.draw_bg('img/bg.png')
             self.input()
-
+   
             if self.countdown == 0:
                 #CHECK GAME STATUS 
                 if self.game_over == 0:
                     self.collisions()
+                    self.healthbar()
                     self.check_game_over()
-                    self.all_sprites.update(self.screen)
+                    self.all_sprites.update(dt)
                 if self.game_over == -1:
                     self.draw_text(f'YOU WIN: Score: {self.player.score}', self.font50, WHITE, int(SCREEN_WIDTH / 2 - 110), int(SCREEN_HEIGHT / 2 + 150))
                 if self.game_over == 1:
@@ -201,8 +205,7 @@ if __name__ == '__main__':
     game = Game()
     game.run()
 
-    
-  
+
     #def random_attack():
         
         #attacking_alien = random.choice(alien_group.sprites()) #get random alien

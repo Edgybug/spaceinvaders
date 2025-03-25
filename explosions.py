@@ -7,7 +7,7 @@ class Explosion(pygame.sprite.Sprite):
 		super().__init__(*groups) 
 		self.images = []
 		for num in range(1, 6):
-			img = pygame.image.load(f"img/exp{num}.png")
+			img = pygame.image.load(f"img/exp{num}.png").convert_alpha()
 			if size == 1:
 				img = pygame.transform.scale(img,(20,20))
 			if size == 2:
@@ -18,11 +18,11 @@ class Explosion(pygame.sprite.Sprite):
 
 		self.index = 0
 		self.image = self.images[self.index]
-		self.rect = self.image.get_rect()
+		self.rect = self.image.get_frect()
 		self.rect.center = [x, y]
 		self.counter = 0
 	
-	def update(self, screen = None):
+	def update(self, dt):
 		explosion_speed = 4
 		#update explosion animation
 		self.counter += 1
