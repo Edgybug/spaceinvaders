@@ -28,6 +28,7 @@ class Game(pygame.sprite.Sprite):
         self.bullet_group = pygame.sprite.Group()
         self.yamato_group = pygame.sprite.Group()
         self.alien_sprites = pygame.sprite.Group()
+        self.side_aliens = pygame.sprite.Group()
         self.random_aliens = pygame.sprite.Group()
         self.alien_bullet_group = pygame.sprite.Group()
         self.explosion_group = pygame.sprite.Group()
@@ -51,7 +52,7 @@ class Game(pygame.sprite.Sprite):
 
         #TIMERS
         #START of game countdown timer
-        self.countdown = 0
+        self.countdown = 3
         self.last_count = pygame.time.get_ticks()
 
         #player shooting timer
@@ -61,9 +62,13 @@ class Game(pygame.sprite.Sprite):
         #alien shooting timer
         self.last_alien_shot = pygame.time.get_ticks()
 
-        #random alien timer
+        #random alien spawn timer
         self.spawn_random_alien = pygame.event.custom_type()
         pygame.time.set_timer(self.spawn_random_alien, 5000)
+
+        #kamikadze aliens  timer
+        self.spawn_side_alien = pygame.event.custom_type()
+        pygame.time.set_timer(self.spawn_side_alien, 8000)
     
     #ADDING TEXT
     def draw_text(self, text, font, text_col,x,y):
@@ -110,8 +115,11 @@ class Game(pygame.sprite.Sprite):
         #generate aliens
         x = random.randint(300, 900)
         y = random.randint(100, 450)    
-        Aliens(x, y,(self.all_sprites, self.random_aliens))
+        Aliens(x, y,(self.all_sprites, self.random_aliens, self.alien_sprites))
     
+    def generate_kamikadze_aliens(self):
+        x = random.randint(-200, 1400)
+        Kamikadze_Aliens(x, -150, self.player ,(self.all_sprites, self.alien_sprites, self.side_aliens))
     #HANDLE COLLISIONS
     def collisions(self):
         time_now = pygame.time.get_ticks() #record_current_time 
@@ -119,13 +127,10 @@ class Game(pygame.sprite.Sprite):
         #ALIENS SHOOTING
         if len(self.alien_sprites) > 0:
             if time_now - self.last_alien_shot > ALIEN_SHOOT_COOLDOWN:
-                attacking_alien = random.choice( self.alien_sprites.sprites()) #get random alien
+                attacking_alien = random.choice(self.alien_sprites.sprites()) #get random alien
                 AlienBullets(attacking_alien.rect.centerx, attacking_alien.rect.bottom,(self.all_sprites, self.alien_bullet_group))
                 self.last_alien_shot = time_now
                     
-                    #if time_now - last_random_alien_atack > ALIEN_ATTACK_COOLDOWN:
-                        #random_attack()
-                        #reverse_attack() 
             #COLLISION PLAYER BULLET -> ALIEN
             for bullet in self.bullet_group:
                     if pygame.sprite.spritecollide(bullet, self.alien_sprites, True, pygame.sprite.collide_mask):
@@ -140,7 +145,21 @@ class Game(pygame.sprite.Sprite):
                     yamato.kill() 
                     self.player.update_score()
                     Explosion(yamato.rect.x, yamato.rect.y, 2,(self.all_sprites, self.explosion_group))
-                        
+
+            #KAMIKADZE ALIENS
+            for alien in self.side_aliens:
+                if pygame.sprite.spritecollide(alien, self.spaceship_sprites, False, pygame.sprite.collide_mask):   
+                    #reduce spaceship health
+                    Explosion(self.player.rect.x, self.player.rect.y, 3,(self.all_sprites, self.explosion_group))
+                    self.explosion2_fx.play()
+                    self.player.health_remaining -= 1
+                    alien.kill()
+                    if self.player.health_remaining == 0:
+                        Explosion(self.player.rect.x, self.player.rect.y, 3,(self.all_sprites, self.explosion_group))
+                        self.explosion_fx.play()
+                        self.player.kill()
+                        self.game_over = 1
+
             #COLLISION ALIEN -> PLAYER
             for bullet in self.alien_bullet_group:
                 if pygame.sprite.spritecollide(bullet, self.spaceship_sprites, False, pygame.sprite.collide_mask):
@@ -157,7 +176,7 @@ class Game(pygame.sprite.Sprite):
 
     #CHECK IF ALL ALIENS ARE ELIMINATED
     def check_game_over(self):
-        if len(self.alien_sprites) == 0:
+        if len(self.alien_sprites) == 0 and len(self.random_aliens) == 0 and len(self.side_aliens) == 0:
             self.game_over = -1
 
     #GAME LOOP  - 1. Handle Events 2. Update Game State 3. Draw Game State
@@ -169,56 +188,44 @@ class Game(pygame.sprite.Sprite):
                 if event.type == pygame.QUIT:
                     self.running = False
                 if event.type == self.spawn_random_alien and len(self.alien_sprites) > 15 and len(self.random_aliens) < 10:
-                    self.generate_random_aliens()               
+                    self.generate_random_aliens()       
+                if event.type == self.spawn_side_alien and len(self.alien_sprites) > 5 and len(self.random_aliens) < 5:
+                    self.generate_kamikadze_aliens()   
 
             self.draw_bg('img/bg.png')
-            self.input()
-   
+        
             if self.countdown == 0:
                 #CHECK GAME STATUS 
                 if self.game_over == 0:
+                    self.input()
                     self.collisions()
                     self.healthbar()
                     self.check_game_over()
                     self.all_sprites.update(dt)
                 if self.game_over == -1:
-                    self.draw_text(f'YOU WIN: Score: {self.player.score}', self.font50, WHITE, int(SCREEN_WIDTH / 2 - 110), int(SCREEN_HEIGHT / 2 + 150))
+                    self.draw_text(f'YOU WIN: Score: {self.player.score}', self.font50, WHITE, int(SCREEN_WIDTH / 2 - 200), int(SCREEN_HEIGHT / 2 + 150))
                 if self.game_over == 1:
-                    self.draw_text('GAME OVER!!!', self.font50, WHITE, int(SCREEN_WIDTH / 2 - 110), int(SCREEN_HEIGHT / 2 + 150))
+                    self.draw_text('GAME OVER!!!', self.font50, WHITE, int(SCREEN_WIDTH / 2 - 200), int(SCREEN_HEIGHT / 2 + 150))
 
             self.all_sprites.draw(self.screen)
             self.draw_text(f'Score: {self.player.score}', self.font30, WHITE, 10, 10)
             self.draw_text(f'Yamato Charges: {self.player.yamato_charges}', self.font30, WHITE, 300, 10)
-            pygame.display.flip()   
+            
 
             #UPDATE GAME START COUNDOWN
             if self.countdown > 0:
-                    pass
-                #draw_text("GET READY!", font50, WHITE, int(SCREEN_WIDTH / 2 - 110), int(SCREEN_HEIGHT / 2 + 150))
-                #draw_text(str(countdown), font50, WHITE, int(SCREEN_WIDTH / 2 + 20), int(SCREEN_HEIGHT / 2 + 200))
-                #count_timer = pygame.time.get_ticks()
-                #if count_timer - self.last_count > 1000:
-                    #self.countdown -= 1
-                    #self.last_count = count_timer
+                self.draw_text("GET READY!", self.font50, WHITE, int(SCREEN_WIDTH / 2 - 150), int(SCREEN_HEIGHT / 2 + 150))
+                self.draw_text(str(self.countdown), self.font50, WHITE, int(SCREEN_WIDTH / 2 - 40), int(SCREEN_HEIGHT / 2 + 200))
+                count_timer = pygame.time.get_ticks()
+                if count_timer - self.last_count > 1000:
+                    self.countdown -= 1
+                    self.last_count = count_timer
+            pygame.display.flip()       
         pygame.quit()
 if __name__ == '__main__':
     game = Game()
     game.run()
 
-
-    #def random_attack():
-        
-        #attacking_alien = random.choice(alien_group.sprites()) #get random alien
-        #attacking_alien.rect.y += 5
-        #attacking_alien.rect.x += 5
-        #last_random_alien_atack = time_now
-
-    #def reverse_attack():
-        
-        #attacking_alien = random.choice(alien_group.sprites()) #get random alien
-        #attacking_alien.rect.y -= 5
-        #attacking_alien.rect.x -= 5
-        #ast_random_alien_atack = time_now
   
    
 
